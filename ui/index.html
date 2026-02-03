@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InTheDark</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+
+  <body>
+    <div class="shell">
+      <div class="chrome">
+        <div class="chrome__row1">
+          <div class="brand">
+            <span class="brand__dot"></span>
+            <span class="brand__name">InTheDark</span>
+          </div>
+
+          <div class="nav">
+            <button id="back" class="iconbtn" title="Back" aria-label="Back">
+              <span>←</span>
+            </button>
+            <button
+              id="forward"
+              class="iconbtn"
+              title="Forward"
+              aria-label="Forward"
+            >
+              <span>→</span>
+            </button>
+            <button
+              id="reload"
+              class="iconbtn"
+              title="Reload"
+              aria-label="Reload"
+            >
+              <span>⟳</span>
+            </button>
+            <button id="home" class="iconbtn" title="Home" aria-label="Home">
+              <span>⌂</span>
+            </button>
+          </div>
+
+          <form id="navForm" class="omnibox">
+            <div class="omnibox__glow"></div>
+            <input
+              id="url"
+              class="omnibox__input"
+              type="text"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="Search or enter a URL…"
+            />
+            <button class="omnibox__go" type="submit">Go</button>
+          </form>
+
+          <div class="chrome__right">
+            <button
+              id="newTab"
+              class="iconbtn"
+              title="New Tab"
+              aria-label="New Tab"
+            >
+              <span>＋</span>
+            </button>
+            <div class="badge" id="proxyPill">
+              <span class="badge__dot"></span>
+              Proxy forced
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs strip -->
+        <div class="tabs">
+          <div id="tabsList" class="tabs__list"></div>
+        </div>
+      </div>
+
+      <!-- BrowserView sits below (full width + to bottom) -->
+      <div class="content"></div>
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

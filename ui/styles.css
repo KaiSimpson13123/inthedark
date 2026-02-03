@@ -1,0 +1,255 @@
+:root{
+  --bg0:#070a0f;
+  --bg1:#0a0f16;
+  --panel: rgba(16, 22, 32, .55);
+  --stroke: rgba(255,255,255,.10);
+  --stroke2: rgba(255,255,255,.06);
+  --text: #eaf1ff;
+  --muted: rgba(234,241,255,.72);
+  --radius: 22px;
+  --shadow2: 0 10px 30px rgba(0,0,0,.35);
+
+  --accent: rgba(122,167,255, .95);
+  --accent2: rgba(143,97,255,.90);
+  --ok: rgba(80, 220, 160, .95);
+
+  --chromeRow1: 78px;
+  --tabsH: 44px;
+  --topPad: 14px;
+  --gap: 10px;
+}
+
+*{ box-sizing:border-box; }
+html, body { height: 100%; }
+body{
+  margin:0;
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:
+    radial-gradient(1200px 800px at 15% 15%, rgba(122,167,255,.16), transparent 60%),
+    radial-gradient(900px 700px at 85% 25%, rgba(143,97,255,.14), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  overflow:hidden;
+}
+
+.shell{ position:relative; height:100%; padding: var(--topPad); }
+
+.chrome{
+  border: 1px solid var(--stroke2);
+  border-radius: calc(var(--radius) + 6px);
+  background: linear-gradient(180deg, rgba(16,22,32,.68), rgba(12,16,26,.50));
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow2);
+  overflow: hidden;
+  position:relative;
+  z-index: 5;
+}
+
+/* Row 1 */
+.chrome__row1{
+  height: var(--chromeRow1);
+  display:grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 12px;
+  align-items:center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.brand{
+  display:flex; align-items:center; gap:10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.03);
+}
+.brand__dot{
+  width:10px;height:10px;border-radius:999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px rgba(122,167,255,.13), 0 0 24px rgba(122,167,255,.45);
+}
+.brand__name{ font-weight: 750; letter-spacing:.3px; }
+
+.nav{ display:flex; gap:10px; }
+
+.iconbtn{
+  width: 42px; height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.iconbtn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12); }
+.iconbtn:active{ transform: translateY(0) scale(.98); }
+.iconbtn:disabled{ opacity:.45; cursor:not-allowed; }
+
+.omnibox{
+  position:relative;
+  height: 50px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,.22);
+  backdrop-filter: blur(14px);
+  display:flex;
+  align-items:center;
+  padding: 8px 10px;
+  overflow:hidden;
+}
+.omnibox__glow{
+  position:absolute; inset:-60px;
+  background:
+    radial-gradient(180px 120px at 20% 50%, rgba(122,167,255,.22), transparent 60%),
+    radial-gradient(180px 120px at 85% 50%, rgba(143,97,255,.20), transparent 60%);
+  pointer-events:none;
+  filter: blur(8px);
+  opacity:.85;
+}
+.omnibox__input{
+  position:relative; z-index:2;
+  flex:1; height:100%;
+  border:0; outline:0;
+  background: transparent;
+  color: var(--text);
+  padding: 0 14px;
+  font-size: 14px;
+}
+.omnibox__input::placeholder{ color: rgba(234,241,255,.50); }
+.omnibox__go{
+  position:relative; z-index:2;
+  height:100%;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: linear-gradient(180deg, rgba(122,167,255,.18), rgba(122,167,255,.10));
+  color: var(--text);
+  cursor:pointer;
+}
+.omnibox:focus-within{
+  border-color: rgba(122,167,255,.35);
+  box-shadow: 0 0 0 6px rgba(122,167,255,.10);
+}
+
+.chrome__right{ display:flex; gap:10px; align-items:center; justify-content:flex-end; }
+.badge{
+  display:flex; align-items:center; gap:10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.03);
+  color: rgba(234,241,255,.78);
+}
+.badge__dot{
+  width: 9px; height: 9px; border-radius: 999px;
+  background: var(--ok);
+  box-shadow: 0 0 0 6px rgba(80,220,160,.12), 0 0 18px rgba(80,220,160,.35);
+}
+
+/* Tabs strip - compact, real browser feel */
+.tabs {
+  padding: 6px 10px 10px;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+
+.tabs__list{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding-bottom: 2px;
+}
+.tabs__list::-webkit-scrollbar{ display:none; }
+
+.tab{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+
+  min-width: 140px;
+  max-width: 240px;
+
+  height: 34px;
+  padding: 0 10px;
+
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+
+  cursor:pointer;
+  user-select:none;
+
+  transition: background .12s ease, border-color .12s ease, transform .12s ease;
+}
+
+.tab:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.12);
+}
+
+.tab--active{
+  background: linear-gradient(180deg, rgba(122,167,255,.18), rgba(255,255,255,.05));
+  border-color: rgba(122,167,255,.28);
+  box-shadow: 0 0 0 4px rgba(122,167,255,.08);
+}
+
+.tab__title{
+  flex:1;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: rgba(234,241,255,.92);
+}
+
+.tab__close{
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  color: rgba(234,241,255,.85);
+
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  line-height: 1;
+  font-size: 16px;
+  padding: 0;
+}
+
+.tab__close:hover{
+  background: rgba(255,255,255,.08);
+}
+
+
+/* Web content area - full width and to bottom */
+.content{
+  position:absolute;
+  left: 0; right: 0; bottom: 0;
+  top: calc(var(--topPad) + var(--chromeRow1) + var(--tabsH) + var(--gap));
+  background: transparent;
+}
+
+
+/* Optional subtle top fade so chrome blends into page */
+.content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(7,10,15,.85),
+    rgba(7,10,15,0)
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
