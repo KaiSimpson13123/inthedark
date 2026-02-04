@@ -1,4 +1,5 @@
 const path = require("path");
+const net = require("net");
 const {
   app,
   BrowserWindow,
@@ -8,7 +9,17 @@ const {
 } = require("electron");
 
 const PROXY = "http://inthedark-proxy.fly.dev:3128";
+const WS_TUNNEL_URL =
+  process.env.WS_TUNNEL_URL || "ws://inthedark-proxy.fly.dev:8080/tunnel";
+const LOCAL_WS_PROXY_PORT = Number(process.env.LOCAL_WS_PROXY_PORT || 3129);
 const HOME = "https://google.com";
+
+let WebSocketClient = global.WebSocket;
+if (!WebSocketClient) {
+  try {
+    ({ WebSocket: WebSocketClient } = require("ws"));
+  } catch {}
+}
 
 const TOP_PAD = 14;
 const CHROME_ROW1 = 78;
@@ -16,6 +27,7 @@ const TABS_H = 44;
 const GAP = 10;
 
 let mainWindow;
+let localProxyServer;
 
 let tabs = [];
 let activeTabId = null;
@@ -255,12 +267,118 @@ function attachActiveView() {
   setActiveViewBounds();
 }
 
-app.commandLine.appendSwitch("proxy-server", PROXY);
+function parseProxyTarget(chunk) {
+  const header = chunk.toString("utf8");
+  const [requestLine, ...lines] = header.split("\r\n");
+  const [method, rawTarget] = requestLine.split(" ");
+
+  if (!method || !rawTarget) return null;
+
+  if (method.toUpperCase() === "CONNECT") {
+    const [host, port] = rawTarget.split(":");
+    if (!host) return null;
+    return { host, port: Number(port || 443), isConnect: true };
+  }
+
+  try {
+    if (rawTarget.startsWith("http://") || rawTarget.startsWith("https://")) {
+      const targetUrl = new URL(rawTarget);
+      return {
+        host: targetUrl.hostname,
+        port: Number(targetUrl.port || (targetUrl.protocol === "https:" ? 443 : 80)),
+        isConnect: false,
+      };
+    }
+  } catch {}
+
+  const hostLine = lines.find((line) => line.toLowerCase().startsWith("host:"));
+  if (!hostLine) return null;
+  const hostValue = hostLine.split(":").slice(1).join(":").trim();
+  if (!hostValue) return null;
+  const [host, port] = hostValue.split(":");
+  return { host, port: Number(port || 80), isConnect: false };
+}
+
+function startWebSocketProxy() {
+  return new Promise((resolve, reject) => {
+    if (!WebSocketClient) {
+      reject(
+        new Error(
+          "WebSocket client not available in the main process; falling back to HTTP proxy."
+        )
+      );
+      return;
+    }
+    const server = net.createServer((socket) => {
+      let connected = false;
+      let ws;
+
+      const cleanup = () => {
+        if (ws && ws.readyState === WebSocketClient.OPEN) ws.close();
+        socket.destroy();
+      };
+
+      socket.once("data", (chunk) => {
+        const target = parseProxyTarget(chunk);
+        if (!target) {
+          socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+          return;
+        }
+
+        ws = new WebSocketClient(WS_TUNNEL_URL);
+        ws.binaryType = "arraybuffer";
+
+        ws.addEventListener("open", () => {
+          ws.send(JSON.stringify({ host: target.host, port: target.port }));
+
+          if (target.isConnect) {
+            socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+          } else {
+            ws.send(chunk);
+          }
+
+          connected = true;
+
+          socket.on("data", (data) => {
+            if (ws.readyState === WebSocketClient.OPEN) ws.send(data);
+          });
+        });
+
+        ws.addEventListener("message", (event) => {
+          socket.write(Buffer.from(event.data));
+        });
+
+        ws.addEventListener("close", cleanup);
+        ws.addEventListener("error", cleanup);
+      });
+
+      socket.on("error", () => {
+        if (!connected) socket.destroy();
+      });
+    });
+
+    server.on("error", reject);
+    server.listen(LOCAL_WS_PROXY_PORT, "127.0.0.1", () => resolve(server));
+  });
+}
+
+function proxyRulesForLocalWs() {
+  return `http=127.0.0.1:${LOCAL_WS_PROXY_PORT};https=127.0.0.1:${LOCAL_WS_PROXY_PORT}`;
+}
 
 app.whenReady().then(async () => {
   try {
+    localProxyServer = await startWebSocketProxy();
+    const proxyRules = proxyRulesForLocalWs();
+    app.commandLine.appendSwitch("proxy-server", proxyRules);
+    await session.defaultSession.setProxy({ proxyRules });
+  } catch {
+    console.warn(
+      "WebSocket proxy unavailable; falling back to HTTP proxy configuration."
+    );
+    app.commandLine.appendSwitch("proxy-server", PROXY);
     await session.defaultSession.setProxy({ proxyRules: PROXY });
-  } catch {}
+  }
 
   createWindow();
 
@@ -338,4 +456,3 @@ ipcMain.on("liability:deny", () => {
   console.log("🛑 liability:deny received");
   app.quit();
 });
-
