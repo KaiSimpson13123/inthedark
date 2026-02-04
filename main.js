@@ -10,13 +10,15 @@ const {
 
 const PROXY = "http://inthedark-proxy.fly.dev:3128";
 const WS_TUNNEL_URL =
-  process.env.WS_TUNNEL_URL || "wss://inthedark-proxy.fly.dev/tunnel";
+  process.env.WS_TUNNEL_URL || "ws://inthedark-proxy.fly.dev:8080/tunnel";
 const LOCAL_WS_PROXY_PORT = Number(process.env.LOCAL_WS_PROXY_PORT || 3129);
 const HOME = "https://google.com";
 
-const WebSocketClient = global.WebSocket;
+let WebSocketClient = global.WebSocket;
 if (!WebSocketClient) {
-  throw new Error("WebSocket support is required to wrap proxy traffic.");
+  try {
+    ({ WebSocket: WebSocketClient } = require("ws"));
+  } catch {}
 }
 
 const TOP_PAD = 14;
@@ -299,6 +301,14 @@ function parseProxyTarget(chunk) {
 
 function startWebSocketProxy() {
   return new Promise((resolve, reject) => {
+    if (!WebSocketClient) {
+      reject(
+        new Error(
+          "WebSocket client not available in the main process; falling back to HTTP proxy."
+        )
+      );
+      return;
+    }
     const server = net.createServer((socket) => {
       let connected = false;
       let ws;
@@ -330,7 +340,7 @@ function startWebSocketProxy() {
           connected = true;
 
           socket.on("data", (data) => {
-            if (ws.readyState === WebSocket.OPEN) ws.send(data);
+            if (ws.readyState === WebSocketClient.OPEN) ws.send(data);
           });
         });
 
@@ -363,6 +373,9 @@ app.whenReady().then(async () => {
     app.commandLine.appendSwitch("proxy-server", proxyRules);
     await session.defaultSession.setProxy({ proxyRules });
   } catch {
+    console.warn(
+      "WebSocket proxy unavailable; falling back to HTTP proxy configuration."
+    );
     app.commandLine.appendSwitch("proxy-server", PROXY);
     await session.defaultSession.setProxy({ proxyRules: PROXY });
   }
